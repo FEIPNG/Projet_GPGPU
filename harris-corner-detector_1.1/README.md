@@ -153,3 +153,8 @@ bicubic_interpolation.cpp: Allows to transform an image through a parametric
 test.cpp: Executes all the tests in the paper and generates data for graphics
 graphics: directory for generating the graphics with gnuplot
 
+Pour compiler avec Cmake
+mkdir build
+cd build
+cmake ..
+make

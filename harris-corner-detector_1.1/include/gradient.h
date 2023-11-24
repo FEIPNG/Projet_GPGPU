@@ -10,13 +10,12 @@
 #ifndef _GRADIENT_H
 #define _GRADIENT_H
 
-
 #define CENTRAL_DIFFERENCES 0
 #define SOBEL_OPERATOR 1
 
 /**
   *
-  * Function to compute the gradient
+  * Function to compute the gradien
   *
 **/
 void gradient(

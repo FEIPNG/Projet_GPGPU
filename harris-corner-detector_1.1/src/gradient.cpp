@@ -8,7 +8,7 @@
 
 
 #include "gradient.h"
-
+#include "gradient_gpu.cuh"
 /**
   *
   * Function to compute the gradient with central differences
@@ -23,7 +23,7 @@ void central_differences(
 )
 {
     //compute gradient in the center body
-    #pragma omp parallel for
+    //#pragma omp parallel for
     for(int i=1; i<ny-1; i++)
     {
         for(int j=1; j<nx-1; j++)
@@ -67,7 +67,7 @@ void sobel_operator(
 )
 {
     //compute gradient in the center body
-    #pragma omp parallel for
+    //#pragma omp parallel for
     for(int i=1; i<ny-1; i++)
     {
         for(int j=1; j<nx-1; j++)
@@ -120,5 +120,5 @@ void gradient(
   if(type==SOBEL_OPERATOR)
     sobel_operator(I, Ix, Iy, nx, ny);
   else
-    central_differences(I, Ix, Iy, nx, ny);
+    central_differences_cuda(I, Ix, Iy, nx, ny);
 }

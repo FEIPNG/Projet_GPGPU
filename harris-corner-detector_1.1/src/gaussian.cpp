@@ -245,7 +245,7 @@ void sii_gaussian_conv_image(sii_coeffs &c, float *dest,
         const float *src_y = src;
         
         /* Filter each row of the channel. */
-#pragma omp parallel for
+//#pragma omp parallel for
         for (y = 0; y < ny; ++y)
         {
             float *buffer = NULL;
@@ -258,7 +258,7 @@ void sii_gaussian_conv_image(sii_coeffs &c, float *dest,
         }
         
         /* Filter each column of the channel. */
-#pragma omp parallel for
+//#pragma omp parallel for
         for (x = 0; x < nx; ++x)
         {
             float *buffer = NULL;
@@ -294,7 +294,7 @@ void discrete_gaussian(
   
 
   if(sigma<=0 || precision<=0){
-    #pragma omp parallel for
+    //#pragma omp parallel for
     for(int i=0; i<xdim*ydim; i++) Is[i] = I[i];
     return;
   }
@@ -324,7 +324,7 @@ void discrete_gaussian(
   for (int i=0; i<size; i++)
     B[i] /= norm;
 
-#pragma omp parallel for
+//#pragma omp parallel for
   //convolution of each line of the input image
   for (int k=0; k<ydim; k++)
   {
@@ -352,7 +352,7 @@ void discrete_gaussian(
     delete []R;
   }
 
-#pragma omp parallel for
+//#pragma omp parallel for
   // convolution of each column of the input image
   for (int k=0; k<xdim; k++)
   {
@@ -411,7 +411,7 @@ void gaussian(
     sii_gaussian_conv_image(c, Is, I, nx, ny, 1);
   }
   else
-    #pragma omp parallel for
+    //#pragma omp parallel for
     for(int i=0; i<nx*ny; i++)
       Is[i]=I[i];
 }
