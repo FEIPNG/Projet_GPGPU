@@ -507,9 +507,9 @@ void harris_parallel(
   if(gauss==NO_GAUSSIAN)
     gauss=FAST_GAUSSIAN;
 
-  gaussian(A, A, nx, ny, sigma_d, gauss);
-  gaussian(B, B, nx, ny, sigma_d, gauss);
-  gaussian(C, C, nx, ny, sigma_d, gauss);
+  gaussian(A, A, nx, ny, sigma_i, gauss);
+  gaussian(B, B, nx, ny, sigma_i, gauss);
+  gaussian(C, C, nx, ny, sigma_i, gauss);
 
 
   message(" 4.Computing corner strength function: \t", start, end, verbose);
