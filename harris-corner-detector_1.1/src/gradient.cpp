@@ -120,5 +120,5 @@ void gradient(
   if(type==SOBEL_OPERATOR)
     sobel_operator(I, Ix, Iy, nx, ny);
   else
-    central_differences_cuda(I, Ix, Iy, nx, ny);
+    central_differences(I, Ix, Iy, nx, ny);
 }
