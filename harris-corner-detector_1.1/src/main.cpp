@@ -13,6 +13,8 @@
 #include <sys/time.h> 
 #include <math.h>
 #include <float.h>
+#include <iostream>
+#include <filesystem>
 #include <omp.h>
 
 #include "harris.h"
@@ -24,7 +26,8 @@ extern "C"
 {
 #include "iio.h"
 }
-
+namespace fs = std::experimental::filesystem;
+#define PAR_DEFAULT_DIRECTORY 0
 #define PAR_DEFAULT_NSCALES 1
 #define PAR_DEFAULT_K 0.06
 #define PAR_DEFAULT_SIGMA_D 1.0
@@ -46,13 +49,14 @@ extern "C"
  */
 void print_help(char *name)
 {
-  printf("\n  Usage: %s image [OPTIONS] \n\n",
+  printf("\n  Usage: %s image [OPTIONimagesS] \n\n",
           name);
   printf("  Harris corner detector:\n");
   printf("  'image' is an input image to detect features on.\n");
   printf("  -----------------------------------------------\n");
   printf("  OPTIONS:\n"); 
   printf("  --------\n");
+  printf("   -s       switch on directory mode \n");
   printf("   -o name  output image with detected corners \n");
   printf("   -f name  write points to file\n");
   printf("   -z N     number of scales for filtering out corners\n");
@@ -113,7 +117,8 @@ int read_parameters(
   int   &cells,
   int   &Nselect,
   int   &precision,  
-  int   &verbose
+  int   &verbose,
+  int   &directory
 )
 {
   if (argc < 2){
@@ -138,6 +143,7 @@ int read_parameters(
     Nselect=PAR_DEFAULT_NSELECT;
     precision=PAR_DEFAULT_PRECISION;
     verbose=PAR_DEFAULT_VERBOSE;
+    directory=PAR_DEFAULT_DIRECTORY;
     
     //read each parameter from the command line
     while(i<argc)
@@ -197,10 +203,11 @@ int read_parameters(
       if(strcmp(argv[i],"-p")==0)
         if(i<argc-1)
           precision=atoi(argv[++i]);
-
       if(strcmp(argv[i],"-v")==0)
         verbose=1;
 
+      if(strcmp(argv[i],"-d")==0)
+        directory=1;
       i++;
     }
 
@@ -370,79 +377,88 @@ int main(int argc, char *argv[])
   char  *image, *out_image=NULL, *out_file=NULL;
   float k, sigma_d, sigma_i, threshold;
   int   gaussian, gradient, strategy, Nselect, measure;
-  int   Nscales, precision, cells, verbose;
+  int   Nscales, precision, cells, verbose, directory;
+
 
   //read the parameters from the console
   int result=read_parameters(
         argc, argv, &image, &out_image, &out_file, Nscales,
         gaussian, gradient, measure, k, sigma_d, sigma_i,
-        threshold, strategy, cells, Nselect, precision, verbose
+        threshold, strategy, cells, Nselect, precision, verbose, directory
       );
 
   if(result)
   {
-    int nx, ny, nz;
+    if(directory){
+      char *dir_path;
+      *dir_path = *image;
+      for (const auto & entry : fs::directory_iterator(dir_path)){
+        image = entry.path();
+        
+        int nx, ny, nz;
 
-    float *Ic=iio_read_image_float_vec(image, &nx, &ny, &nz);
+        float *Ic=iio_read_image_float_vec(image, &nx, &ny, &nz);
 
-    if(verbose)
-      printf(
-        "\nParameters:\n"
-        "  input image: %s\n  output image: %s\n  output file: %s\n"
-        "  Nscales: %d, gaussian: %d, gradient: %d, measure: %d, K: %f, \n"
-        "  sigma_d: %f, sigma_i: %f, threshold: %f, strategy: %d, \n"
-        "  cells: %d, N: %d, precision: %d, nx: %d, ny: %d, nz: %d\n",
-        image, out_image, out_file, Nscales, gaussian, gradient, measure, 
-        k, sigma_d, sigma_i, threshold, strategy, cells, Nselect, 
-        precision, nx, ny, nz
-      );
+        if(verbose)
+          printf(
+            "\nParameters:\n"
+            "  input image: %s\n  output image: %s\n  output file: %s\n"
+            "  Nscales: %d, gaussian: %d, gradient: %d, measure: %d, K: %f, \n"
+            "  sigma_d: %f, sigma_i: %f, threshold: %f, strategy: %d, \n"
+            "  cells: %d, N: %d, precision: %d, nx: %d, ny: %d, nz: %d\n",
+            image, out_image, out_file, Nscales, gaussian, gradient, measure, 
+            k, sigma_d, sigma_i, threshold, strategy, cells, Nselect, 
+            precision, nx, ny, nz
+          );
 
-    if (Ic!=NULL)
-    {
-      std::vector<harris_corner> corners;
-      float *I=new float[nx*ny];
+        if (Ic!=NULL)
+        {
+          std::vector<harris_corner> corners;
+          float *I=new float[nx*ny];
 
-      //convert image to grayscale
-      if(nz>1)
-        rgb2gray(Ic, I, nx, ny, nz);
-      else
-        for(int i=0;i<nx*ny;i++)
-          I[i]=Ic[i];
+          //convert image to grayscale
+          if(nz>1)
+            rgb2gray(Ic, I, nx, ny, nz);
+          else
+            for(int i=0;i<nx*ny;i++)
+              I[i]=Ic[i];
 
-      struct timeval start, end;
-      if(verbose) gettimeofday(&start, NULL);
+          struct timeval start, end;
+          if(verbose) gettimeofday(&start, NULL);
 
-      //compute Harris' corners
-      harris_scale(
-        I, corners, Nscales, gaussian, gradient, measure, k, 
-        sigma_d, sigma_i, threshold, strategy, cells, Nselect, 
-        precision, nx, ny, verbose
-      );
-    
-      if(verbose)
-      {
-        gettimeofday(&end, NULL);
-        printf("\nTime: %fs\n", ((end.tv_sec-start.tv_sec)* 1000000u + 
-            end.tv_usec - start.tv_usec) / 1.e6);
+          //compute Harris' corners
+          harris_scale(
+            I, corners, Nscales, gaussian, gradient, measure, k, 
+            sigma_d, sigma_i, threshold, strategy, cells, Nselect, 
+            precision, nx, ny, verbose
+          );
+        
+          if(verbose)
+          {
+            gettimeofday(&end, NULL);
+            printf("\nTime: %fs\n", ((end.tv_sec-start.tv_sec)* 1000000u + 
+                end.tv_usec - start.tv_usec) / 1.e6);
+          }
+
+          if(out_image!=NULL)
+          {
+            draw_points(Ic, corners, strategy, cells, nx, ny, nz, 2*sigma_i+0.5);
+            iio_save_image_float_vec(out_image, Ic, nx, ny, nz);
+          }
+
+          if(out_file!=NULL)
+          {
+            FILE *fd=fopen(out_file,"w");
+            fprintf(fd, "Number of points: %ld\n", corners.size());
+            for(unsigned int i=0;i<corners.size();i++)
+              fprintf(fd, "%f %f %f\n", corners[i].x, corners[i].y, corners[i].R);
+            fclose(fd);
+          }
+
+          delete []I;
+          free(Ic);
+        }
       }
-
-      if(out_image!=NULL)
-      {
-        draw_points(Ic, corners, strategy, cells, nx, ny, nz, 2*sigma_i+0.5);
-        iio_save_image_float_vec(out_image, Ic, nx, ny, nz);
-      }
-
-      if(out_file!=NULL)
-      {
-        FILE *fd=fopen(out_file,"w");
-        fprintf(fd, "Number of points: %ld\n", corners.size());
-        for(unsigned int i=0;i<corners.size();i++)
-          fprintf(fd, "%f %f %f\n", corners[i].x, corners[i].y, corners[i].R);
-        fclose(fd);
-      }
-
-      delete []I;
-      free(Ic);
     }
     else 
     {
