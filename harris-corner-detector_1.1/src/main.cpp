@@ -16,7 +16,7 @@
 #include <iostream>
 #include <filesystem>
 #include <omp.h>
-
+#include <experimental/filesystem>
 #include "harris.h"
 #include "gaussian.h"
 #include "gradient.h"
@@ -387,14 +387,8 @@ int main(int argc, char *argv[])
         threshold, strategy, cells, Nselect, precision, verbose, directory
       );
 
-  if(result)
-  {
-    if(directory){
-      char *dir_path;
-      *dir_path = *image;
-      for (const auto & entry : fs::directory_iterator(dir_path)){
-        image = entry.path();
-        
+  if(result){
+    if(!directory){
         int nx, ny, nz;
 
         float *Ic=iio_read_image_float_vec(image, &nx, &ny, &nz);
@@ -458,13 +452,82 @@ int main(int argc, char *argv[])
           delete []I;
           free(Ic);
         }
+    }else{
+      char *dir_path;
+      *dir_path = *image;
+      for (const auto & entry : fs::directory_iterator(dir_path)){
+        const char* img_const = entry.path().c_str();
+        
+        int nx, ny, nz;
+
+        float *Ic=iio_read_image_float_vec(img_const, &nx, &ny, &nz);
+
+        if(verbose)
+          printf(
+            "\nParameters:\n"
+            "  input image: %s\n  output image: %s\n  output file: %s\n"
+            "  Nscales: %d, gaussian: %d, gradient: %d, measure: %d, K: %f, \n"
+            "  sigma_d: %f, sigma_i: %f, threshold: %f, strategy: %d, \n"
+            "  cells: %d, N: %d, precision: %d, nx: %d, ny: %d, nz: %d\n",
+            img_const, out_image, out_file, Nscales, gaussian, gradient, measure, 
+            k, sigma_d, sigma_i, threshold, strategy, cells, Nselect, 
+            precision, nx, ny, nz
+          );
+
+        if (Ic!=NULL)
+        {
+          std::vector<harris_corner> corners;
+          float *I=new float[nx*ny];
+
+          //convert image to grayscale
+          if(nz>1)
+            rgb2gray(Ic, I, nx, ny, nz);
+          else
+            for(int i=0;i<nx*ny;i++)
+              I[i]=Ic[i];
+
+          struct timeval start, end;
+          if(verbose) gettimeofday(&start, NULL);
+
+          //compute Harris' corners
+          harris_scale(
+            I, corners, Nscales, gaussian, gradient, measure, k, 
+            sigma_d, sigma_i, threshold, strategy, cells, Nselect, 
+            precision, nx, ny, verbose
+          );
+        
+          if(verbose)
+          {
+            gettimeofday(&end, NULL);
+            printf("\nTime: %fs\n", ((end.tv_sec-start.tv_sec)* 1000000u + 
+                end.tv_usec - start.tv_usec) / 1.e6);
+          }
+
+          if(out_image!=NULL)
+          {
+            draw_points(Ic, corners, strategy, cells, nx, ny, nz, 2*sigma_i+0.5);
+            iio_save_image_float_vec(out_image, Ic, nx, ny, nz);
+          }
+
+          if(out_file!=NULL)
+          {
+            FILE *fd=fopen(out_file,"w");
+            fprintf(fd, "Number of points: %ld\n", corners.size());
+            for(unsigned int i=0;i<corners.size();i++)
+              fprintf(fd, "%f %f %f\n", corners[i].x, corners[i].y, corners[i].R);
+            fclose(fd);
+            corners.clear();
+          }
+
+          delete []I;
+          free(Ic);
+        }
       }
     }
-    else 
-    {
+    
+  }else{
       printf("Cannot read image %s\n", image);
       exit(EXIT_FAILURE);
-    }
   }
   exit(EXIT_SUCCESS);
 }
