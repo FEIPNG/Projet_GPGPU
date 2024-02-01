@@ -456,6 +456,8 @@ int main(int argc, char *argv[])
             return 1;
           }
           free(Ic);
+
+           printf("fin load Img %d \n", i);
         }        
         printf("fin load IC\n");
         if (I!=NULL) {
