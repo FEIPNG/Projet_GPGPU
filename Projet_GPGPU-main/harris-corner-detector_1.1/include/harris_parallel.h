@@ -122,7 +122,7 @@ void harris_parallel(
 **/
 void harris_scale_parallel(
   float *I,        //input image
-  std::vector<harris_corner> &corners, //output selected corners
+  std::vector<std::vector<harris_corner>> &corners, //output selected corners
   int   Nscales,   //number of scales for checking the stability of corners
   int   gauss,     //type of Gaussian 
   int   grad,      //type of gradient
@@ -137,7 +137,8 @@ void harris_scale_parallel(
   int   precision, //type of subpixel precision approximation
   int   nx,        //number of columns of the image
   int   ny,        //number of rows of the image
-  int   verbose    //activate verbose mode
+  int   verbose,   //activate verbose mode
+  int   nbr_imgs   // number of images
 );
 
 #endif

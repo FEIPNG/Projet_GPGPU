@@ -416,6 +416,7 @@ int main(int argc, char *argv[])
             cpt++;
           }
         }
+        
         // convert vector to char**
         // char ** images_ptr = new char*[image.size()]; 
         // for(int i = 0; i<image.size();++i)
@@ -424,30 +425,38 @@ int main(int argc, char *argv[])
         // }
         closedir(dir_);
         int nx, ny, nz;
-        int indice = 0;
-        printf("%s",(char*)image[indice].c_str());
-        float* Ic = iio_read_image_float_vec(image[indice].c_str(), &nx, &ny, &nz);
-        if(verbose)
+        // loop over all images -> Ic pour chaque image
+        float *I = new float[nx*ny*image.size()];
+
+        for(int i = 0; i<image.size();++i){
+          float* Ic = iio_read_image_float_vec(image[indice].c_str(), &nx, &ny, &nz);
+          if(verbose)
           printf(
             "\nParameters:\n"
             "  input image: %s\n  output image: %s\n  output file: %s\n"
             "  Nscales: %d, gaussian: %d, gradient: %d, measure: %d, K: %f, \n"
             "  sigma_d: %f, sigma_i: %f, threshold: %f, strategy: %d, \n"
             "  cells: %d, N: %d, precision: %d, nx: %d, ny: %d, nz: %d\n",
-          image[indice], out_image, out_file, Nscales, gaussian, gradient, measure, 
+          (char*)image[i].c_str(), out_image, out_file, Nscales, gaussian, gradient, measure, 
           k, sigma_d, sigma_i, threshold, strategy, cells, Nselect, 
           precision, nx, ny, nz
         );
-        
-        if (Ic!=NULL) {
-          std::vector<harris_corner> corners;
-          float *I = new float[nx*ny];
-          //convert image to grayscale
-          if(nz>1)
-            rgb2gray(Ic, I, nx, ny, nz);
-          else
-            for(int i=0;i<nx*ny;i++)
-              I[i]=Ic[i];
+          if(Ic!=NULL){
+            //convert image to grayscale
+            // concatenate Ic dans I
+            if(nz>1)
+              rgb2gray(Ic, I, nx, ny, nz);
+            else
+              for(int j=0;j<nx*ny;j++)
+                I[i*nx*ny + j]=Ic[j];
+          }else{
+            //affichage error 
+            printf("Error : Load image %s .\n", (char*)image[i].c_str());
+            return 1;
+          }
+        }        
+        if (I!=NULL) {
+          std::vector<std::vector<harris_corner>> corners;
           struct timeval start, end;
           if(verbose) gettimeofday(&start, NULL);
           //compute Harris' corners
@@ -456,33 +465,19 @@ int main(int argc, char *argv[])
             sigma_d, sigma_i, threshold, strategy, cells, Nselect, 
             precision, nx, ny, verbose
           );
-          printf("c %d",corners.size());
+          
             if(verbose)
           {
             gettimeofday(&end, NULL);
             printf("\nTime: %fs\n", ((end.tv_sec-start.tv_sec)* 1000000u + 
                 end.tv_usec - start.tv_usec) / 1.e6);
-          }
-
-          if(out_image!=NULL)
-          {
-            draw_points(Ic, corners, strategy, cells, nx, ny, nz, 2*sigma_i+0.5);
-            iio_save_image_float_vec(out_image, Ic, nx, ny, nz);
-          }
-          if(out_file!=NULL)
-          {
-            FILE *fd=fopen(out_file,"w");
-            fprintf(fd, "Number of points: %ld\n", corners.size());
-            for(unsigned int i=0;i<corners.size();i++)
-              fprintf(fd, "%f %f %f\n", corners[i].x, corners[i].y, corners[i].R);
-            fclose(fd);
+            for(int i = 0; i<image.size();++i){
+              printf("image %d : %d \n", i, corners[i].size());
+            }
           }
           delete []I;
           free(Ic);
         } 
-        // for (int i = 0; i < Ic.size(); i++) {
-        //   free(Ic[i]);
-        // }
       }
     } 
   }

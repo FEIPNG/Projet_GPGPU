@@ -548,8 +548,8 @@ void harris_parallel(
   *
 **/
 void harris_scale_parallel(
-  float *I,        //input image
-  vector<harris_corner> &corners, //output selected corners
+  float *I,        //input images
+  vector<vector<harris_corner>> &corners, //output selected corners
   int   Nscales,   //number of scales for checking the stability of corners
   int   gauss,     //type of Gaussian 
   int   grad,      //type of gradient
@@ -564,42 +564,49 @@ void harris_scale_parallel(
   int   precision, //type of subpixel precision approximation
   int   nx,        //number of columns of the image
   int   ny,        //number of rows of the image
-  int   verbose    //activate verbose mode
+  int   verbose,   //activate verbose mode
+  int   nbr_imgs   // number of images
 )
 {
-  if(Nscales<=1 || nx<=64 || ny<=64)
-  {
-    //compute Harris' corners at coarsest scale
-    harris_parallel(
-      I, corners, gauss, grad, measure, k, sigma_d, sigma_i, 
-      Th, strategy, cells, N, precision, nx, ny, verbose
-    );
-  } 
-  else
-  {
-    //zoom out the image by a factor of 2
-    float *Iz=zoom_out(I, nx, ny);
-    
-    //compute Harris' corners at the coarse scale (recursive)
-    vector<harris_corner> corners_z; 
-    harris_scale_parallel(
-      Iz, corners_z, Nscales-1, gauss, grad, measure, k, sigma_d, 
-      sigma_i/2, Th, strategy, cells, N, precision, nx/2, ny/2, verbose
-    );
-    
-    delete []Iz;
+  for (int index_img = 0; index_img < nbr_imgs; index_img++){
+    float* I_img;
+    for(int j = 0; j < nx*ny; j++){
+      I_img[j] = I[index_img*nx*ny+j];
+    }
+    if(Nscales<=1 || nx<=64 || ny<=64)
+    {
+      //compute Harris' corners at coarsest scale
+      harris_parallel(
+        I_img, corners[index_img], gauss, grad, measure, k, sigma_d, sigma_i, 
+        Th, strategy, cells, N, precision, nx, ny, verbose
+      );
+    } 
+    else
+    {
+      //zoom out the image by a factor of 2
+      float *Iz=zoom_out(I_img, nx, ny);
+      
+      //compute Harris' corners at the coarse scale (recursive)
+      vector<harris_corner> corners_z; 
+      harris_scale_parallel(
+        Iz, corners_z, Nscales-1, gauss, grad, measure, k, sigma_d, 
+        sigma_i/2, Th, strategy, cells, N, precision, nx/2, ny/2, verbose
+      );
+      
+      delete []Iz;
 
-    //compute Harris' corners at the current scale
-    harris_parallel(
-      I, corners, gauss, grad, measure, k, sigma_d, sigma_i, 
-      Th, strategy, cells, N, precision, nx, ny, verbose
-    );
+      //compute Harris' corners at the current scale
+      harris_parallel(
+        I_img, corners[index_img], gauss, grad, measure, k, sigma_d, sigma_i, 
+        Th, strategy, cells, N, precision, nx, ny, verbose
+      );
 
-    //select stable corners
-    select_corners(corners, corners_z, sigma_i);
-    
-    if(verbose)
-      printf(" * Number of corners after scale check: %ld\n", corners.size());
-  }
+      //select stable corners
+      select_corners(corners[index_img], corners_z, sigma_i);
+      
+      if(verbose)
+        printf(" * Number of corners after scale check: %ld\n", corners[index_img].size());
+    }
+  }  
 }
 
