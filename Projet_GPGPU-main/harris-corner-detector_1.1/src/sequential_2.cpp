@@ -13,18 +13,21 @@
 #include <sys/time.h> 
 #include <math.h>
 #include <float.h>
+#include <iostream>
+#include <filesystem>
 #include <omp.h>
 
 #include "harris.h"
 #include "gaussian.h"
 #include "gradient.h"
 #include "interpolation.h"
-
+#include <dirent.h>
+#include <unistd.h>
 extern "C"
 {
 #include "iio.h"
 }
-
+#define PAR_DEFAULT_DIRECTORY 0
 #define PAR_DEFAULT_NSCALES 1
 #define PAR_DEFAULT_K 0.06
 #define PAR_DEFAULT_SIGMA_D 1.0
@@ -46,13 +49,14 @@ extern "C"
  */
 void print_help(char *name)
 {
-  printf("\n  Usage: %s image [OPTIONS] \n\n",
+  printf("\n  Usage: %s image [OPTIONimagesS] \n\n",
           name);
   printf("  Harris corner detector:\n");
   printf("  'image' is an input image to detect features on.\n");
   printf("  -----------------------------------------------\n");
   printf("  OPTIONS:\n"); 
   printf("  --------\n");
+  printf("   -r       switch on directory mode \n");
   printf("   -o name  output image with detected corners \n");
   printf("   -f name  write points to file\n");
   printf("   -z N     number of scales for filtering out corners\n");
@@ -113,7 +117,8 @@ int read_parameters(
   int   &cells,
   int   &Nselect,
   int   &precision,  
-  int   &verbose
+  int   &verbose,
+  int   &directory
 )
 {
   if (argc < 2){
@@ -134,10 +139,11 @@ int read_parameters(
     measure=PAR_DEFAULT_MEASURE;
     threshold=PAR_DEFAULT_THRESHOLD;
     strategy=PAR_DEFAULT_SELECT_STRATEGY;
-    cells=PAR_DEFAULT_CELLS;
+    cells=PAR_DEFAULT_CELLS;  
     Nselect=PAR_DEFAULT_NSELECT;
     precision=PAR_DEFAULT_PRECISION;
     verbose=PAR_DEFAULT_VERBOSE;
+    directory=0;
     
     //read each parameter from the command line
     while(i<argc)
@@ -200,6 +206,10 @@ int read_parameters(
 
       if(strcmp(argv[i],"-v")==0)
         verbose=1;
+
+      if(strcmp(argv[i],"-r")==0)
+        directory=1;
+      
 
       i++;
     }
@@ -367,88 +377,119 @@ void rgb2gray(
 int main(int argc, char *argv[]) 
 {      
   //parameters of the method
-  char  *image, *out_image=NULL, *out_file=NULL;
+  char  *out_image=NULL, *dir, *out_dir=NULL, *out_file=NULL;
   float k, sigma_d, sigma_i, threshold;
   int   gaussian, gradient, strategy, Nselect, measure;
-  int   Nscales, precision, cells, verbose;
+  int   Nscales, precision, cells, verbose, directory;
+  // float** Ic;
 
   //read the parameters from the console
+
   int result=read_parameters(
-        argc, argv, &image, &out_image, &out_file, Nscales,
+        argc, argv, &dir, &out_dir, &out_file, Nscales,
         gaussian, gradient, measure, k, sigma_d, sigma_i,
-        threshold, strategy, cells, Nselect, precision, verbose
+        threshold, strategy, cells, Nselect, precision, verbose, directory
       );
 
   if(result)
   {
-    int nx, ny, nz;
-
-    float *Ic=iio_read_image_float_vec(image, &nx, &ny, &nz);
-
-    if(verbose)
-      printf(
-        "\nParameters:\n"
-        "  input image: %s\n  output image: %s\n  output file: %s\n"
-        "  Nscales: %d, gaussian: %d, gradient: %d, measure: %d, K: %f, \n"
-        "  sigma_d: %f, sigma_i: %f, threshold: %f, strategy: %d, \n"
-        "  cells: %d, N: %d, precision: %d, nx: %d, ny: %d, nz: %d\n",
-        image, out_image, out_file, Nscales, gaussian, gradient, measure, 
-        k, sigma_d, sigma_i, threshold, strategy, cells, Nselect, 
-        precision, nx, ny, nz
-      );
-
-    if (Ic!=NULL)
-    {
-      std::vector<harris_corner> corners;
-      float *I=new float[nx*ny];
-
-      //convert image to grayscale
-      if(nz>1)
-        rgb2gray(Ic, I, nx, ny, nz);
-      else
-        for(int i=0;i<nx*ny;i++)
-          I[i]=Ic[i];
-
-      struct timeval start, end;
-      if(verbose) gettimeofday(&start, NULL);
-
-      //compute Harris' corners
-      harris_scale(
-        I, corners, Nscales, gaussian, gradient, measure, k, 
-        sigma_d, sigma_i, threshold, strategy, cells, Nselect, 
-        precision, nx, ny, verbose
-      );
-    
-      if(verbose)
-      {
-        gettimeofday(&end, NULL);
-        printf("\nTime: %fs\n", ((end.tv_sec-start.tv_sec)* 1000000u + 
-            end.tv_usec - start.tv_usec) / 1.e6);
+    if(directory == 1){
+      // *dir_path = *image;
+      DIR *dir_;
+      struct dirent *ent;
+      char cwd[PATH_MAX];
+      if (getcwd(cwd, sizeof(cwd)) != NULL) {
+        printf("Current working dir: %s\n", cwd);
+      } else {
+          perror("getcwd() error");
+          return 1;
       }
+      std::string full_dir_path = std::string(cwd)+"/"+std::string(dir);
+      if ((dir_ = opendir(full_dir_path.c_str()))!= NULL) {
+        /* print all the files and directories within directory */
+        int cpt = 0;
+        std::vector<std::string> image;
+        while ((ent = readdir (dir_)) != NULL) {
+          if(ent->d_name[0]!='.' || (ent->d_name[1]!='\0' && ent->d_name[1]!='.' )){
+            std::string full_path = full_dir_path+"/"+ent->d_name;
+            image.push_back(full_path);
+            cpt++;
+          }
+        }
+        // convert vector to char**
+        // char ** images_ptr = new char*[image.size()]; 
+        // for(int i = 0; i<image.size();++i)
+        // {
+        //   images_ptr[i] = (char*)image[i].c_str();
+        // }
+        closedir(dir_);
+        int nx, ny, nz;
+        int indice = 0;
+        printf("%s",(char*)image[indice].c_str());
+        float* Ic = iio_read_image_float_vec(image[indice].c_str(), &nx, &ny, &nz);
+        if(verbose)
+          printf(
+            "\nParameters:\n"
+            "  input image: %s\n  output image: %s\n  output file: %s\n"
+            "  Nscales: %d, gaussian: %d, gradient: %d, measure: %d, K: %f, \n"
+            "  sigma_d: %f, sigma_i: %f, threshold: %f, strategy: %d, \n"
+            "  cells: %d, N: %d, precision: %d, nx: %d, ny: %d, nz: %d\n",
+          image[indice], out_image, out_file, Nscales, gaussian, gradient, measure, 
+          k, sigma_d, sigma_i, threshold, strategy, cells, Nselect, 
+          precision, nx, ny, nz
+        );
+        
+        if (Ic!=NULL) {
+          std::vector<harris_corner> corners;
+          float *I = new float[nx*ny];
+          //convert image to grayscale
+          if(nz>1)
+            rgb2gray(Ic, I, nx, ny, nz);
+          else
+            for(int i=0;i<nx*ny;i++)
+              I[i]=Ic[i];
+          struct timeval start, end;
+          if(verbose) gettimeofday(&start, NULL);
+          //compute Harris' corners
+          harris_scale(
+            I, corners, Nscales, gaussian, gradient, measure, k, 
+            sigma_d, sigma_i, threshold, strategy, cells, Nselect, 
+            precision, nx, ny, verbose
+          );
+          printf("c %d",corners.size());
+            if(verbose)
+          {
+            gettimeofday(&end, NULL);
+            printf("\nTime: %fs\n", ((end.tv_sec-start.tv_sec)* 1000000u + 
+                end.tv_usec - start.tv_usec) / 1.e6);
+          }
 
-      if(out_image!=NULL)
-      {
-        draw_points(Ic, corners, strategy, cells, nx, ny, nz, 2*sigma_i+0.5);
-        iio_save_image_float_vec(out_image, Ic, nx, ny, nz);
+          if(out_image!=NULL)
+          {
+            draw_points(Ic, corners, strategy, cells, nx, ny, nz, 2*sigma_i+0.5);
+            iio_save_image_float_vec(out_image, Ic, nx, ny, nz);
+          }
+          if(out_file!=NULL)
+          {
+            FILE *fd=fopen(out_file,"w");
+            fprintf(fd, "Number of points: %ld\n", corners.size());
+            for(unsigned int i=0;i<corners.size();i++)
+              fprintf(fd, "%f %f %f\n", corners[i].x, corners[i].y, corners[i].R);
+            fclose(fd);
+          }
+          delete []I;
+          free(Ic);
+        } 
+        // for (int i = 0; i < Ic.size(); i++) {
+        //   free(Ic[i]);
+        // }
       }
-
-      if(out_file!=NULL)
-      {
-        FILE *fd=fopen(out_file,"w");
-        fprintf(fd, "Number of points: %ld\n", corners.size());
-        for(unsigned int i=0;i<corners.size();i++)
-          fprintf(fd, "%f %f %f\n", corners[i].x, corners[i].y, corners[i].R);
-        fclose(fd);
-      }
-
-      delete []I;
-      free(Ic);
-    }
-    else 
-    {
-      printf("Cannot read image %s\n", image);
-      exit(EXIT_FAILURE);
-    }
+    } 
+  }
+  else 
+  {
+    printf("Cannot read image\n");
+    exit(EXIT_FAILURE);
   }
   exit(EXIT_SUCCESS);
 }
