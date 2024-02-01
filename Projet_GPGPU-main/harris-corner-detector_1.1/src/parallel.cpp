@@ -366,7 +366,7 @@ void rgb2gray(
 )
 {
   for(int i=0;i<nx*ny;i++)
-    gray[indice_img*nx*ny + i]=(0.2989*rgb[i*nz]+0.5870*rgb[i*nz+1]+0.1140*rgb[i*nz+2]);
+    gray[indice_img*nx*ny + i]=(0.2989*rgb[i*nz]+0.       870*rgb[i*nz+1]+0.1140*rgb[i*nz+2]);
 }
 
 
@@ -427,8 +427,8 @@ int main(int argc, char *argv[])
         closedir(dir_);
         int nx, ny, nz;
         // loop over all images -> Ic pour chaque image
+        std::cout<<image.size();
         float *I = new float[nx*ny*image.size()];
-
         for(int i = 0; i<image.size();++i){
           float* Ic = iio_read_image_float_vec(image[i].c_str(), &nx, &ny, &nz);
           if(verbose)
@@ -456,8 +456,7 @@ int main(int argc, char *argv[])
             return 1;
           }
           free(Ic);
-
-           printf("fin load Img %d \n", i);
+          printf("fin load Img %d \n", i);
         }        
         printf("fin load IC\n");
         if (I!=NULL) {
