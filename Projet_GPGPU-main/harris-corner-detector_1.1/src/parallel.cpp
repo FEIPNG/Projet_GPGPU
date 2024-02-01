@@ -365,12 +365,9 @@ void rgb2gray(
   int   indice_img // indice of image
 )
 {
-  printf("start rgb");
-  for(int i=0;i<nx*ny;i++){
+  for(int i=0;i<nx*ny;i++)
     gray[indice_img*nx*ny + i]=(0.2989*rgb[i*nz]+0.870*rgb[i*nz+1]+0.1140*rgb[i*nz+2]);
-    printf("fin rgb %d \n", i);
-  }
-  
+
 }
 
 
