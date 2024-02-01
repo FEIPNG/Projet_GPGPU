@@ -366,7 +366,7 @@ void rgb2gray(
 )
 {
   for(int i=0;i<nx*ny;i++)
-    gray[indice_img*nx*ny + i]=(0.2989*rgb[i*nz]+0.870*rgb[i*nz+1]+0.1140*rgb[i*nz+2]);
+    gray[indice_img*nx*ny + i]=(0.2989*rgb[i*nz]+0.5870*rgb[i*nz+1]+0.1140*rgb[i*nz+2]);
 
 }
 
