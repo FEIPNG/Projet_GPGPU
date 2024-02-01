@@ -497,7 +497,9 @@ void harris(
     printf("\nHarris corner detection:\n");
     printf("[nx=%d, ny=%d, sigma_i=%f]\n", nx, ny, sigma_i);
   }
-
+  for (int j = 0; j < 100; j++){
+		printf("%f",I[j]);
+	}
   message(" 1.Smoothing the image: \t \t", start, verbose);
   gaussian(I, I, nx, ny, sigma_d, gauss);
   

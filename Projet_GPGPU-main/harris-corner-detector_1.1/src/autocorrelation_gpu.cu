@@ -36,10 +36,10 @@ void compute_autocorrelation_matrix_cuda(float *Ix, float *Iy, float *A, float *
     cudaMemcpy(A, d_A, imageSize * sizeof(float), cudaMemcpyDeviceToHost);
     cudaMemcpy(B, d_B, imageSize * sizeof(float), cudaMemcpyDeviceToHost);    
     cudaMemcpy(C, d_C, imageSize * sizeof(float), cudaMemcpyDeviceToHost);
-    printf("A:\n");
-    for (int j = 0; j < 100; j++){
-		printf("%f",A[j]);
-	}
+    // printf("A:\n");
+    // for (int j = 0; j < 100; j++){
+	// 	printf("%f",A[j]);
+	// }
     // printf("B:\n");
     // for (int j = 0; j < imageSize; j++){
 	// 	printf("%f",B[j]);
