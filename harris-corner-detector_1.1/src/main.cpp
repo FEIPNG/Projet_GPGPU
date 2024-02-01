@@ -418,15 +418,16 @@ int main(int argc, char *argv[])
         }
         // convert vector to char**
         // char ** images_ptr = new char*[image.size()]; 
-        // for(int i = 0; i<image.size();++i)
-        // {
-        //   images_ptr[i] = (char*)image[i].c_str();
-        // }
+         for(int i = 0; i<image.size();++i)
+         {
+     //      images_ptr[i] = (char*)image[i].c_str();
+        	printf("%s",(char*)image[i].c_str());
+	 }
         closedir(dir_);
         int nx, ny, nz;
         int indice = 0;
         printf("%s",(char*)image[indice].c_str());
-        float* Ic = iio_read_image_float_vec(image[indice].c_str(), &nx, &ny, &nz);
+        float* Ic = iio_read_image_float_vec((char*)image[indice].c_str(), &nx, &ny, &nz);
         if(verbose)
           printf(
             "\nParameters:\n"
@@ -434,7 +435,7 @@ int main(int argc, char *argv[])
             "  Nscales: %d, gaussian: %d, gradient: %d, measure: %d, K: %f, \n"
             "  sigma_d: %f, sigma_i: %f, threshold: %f, strategy: %d, \n"
             "  cells: %d, N: %d, precision: %d, nx: %d, ny: %d, nz: %d\n",
-          image[indice], out_image, out_file, Nscales, gaussian, gradient, measure, 
+          (char*)image[indice].c_str(), out_image, out_file, Nscales, gaussian, gradient, measure, 
           k, sigma_d, sigma_i, threshold, strategy, cells, Nselect, 
           precision, nx, ny, nz
         );

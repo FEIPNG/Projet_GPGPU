@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/sequential.dir/src/sequential.cpp.o -o sequential   -L/usr/local/cuda/targets/x86_64-linux/lib/stubs  -L/usr/local/cuda/targets/x86_64-linux/lib  src/libhcd.a src/libhcd_cuda.a -lpng -ltiff -ljpeg -lm -lcudadevrt -lcudart_static -lrt -lpthread -ldl 
