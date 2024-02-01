@@ -590,6 +590,7 @@ void harris_scale_parallel(
         );
         corners.push_back(corner);
         printf("fin harris parallel\n");
+        free(I_img);
       } 
     }  
     else
