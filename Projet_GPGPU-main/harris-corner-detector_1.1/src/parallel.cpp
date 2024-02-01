@@ -432,9 +432,11 @@ int main(int argc, char *argv[])
         int nx, ny, nz;
         // loop over all images -> Ic pour chaque image
         std::cout<<image.size();
+        float* Ic = iio_read_image_float_vec(image[0].c_str(), &nx, &ny, &nz);
         float *I = new float[nx*ny*image.size()];
         for(int i = 0; i<image.size();++i){
-          float* Ic = iio_read_image_float_vec(image[i].c_str(), &nx, &ny, &nz);
+          if(i!=0)
+            Ic = iio_read_image_float_vec(image[i].c_str(), &nx, &ny, &nz);
           if(verbose)
           printf(
             "\nParameters:\n"
@@ -459,9 +461,9 @@ int main(int argc, char *argv[])
             printf("Error : Load image %s .\n", (char*)image[i].c_str());
             return 1;
           }
-          free(Ic);
           printf("fin load Img %d \n", i);
         }        
+        free(Ic);
         printf("fin load IC\n");
         if (I!=NULL) {
           std::vector<std::vector<harris_corner>> corners;
