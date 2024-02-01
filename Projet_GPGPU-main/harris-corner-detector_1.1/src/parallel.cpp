@@ -429,7 +429,7 @@ int main(int argc, char *argv[])
         float *I = new float[nx*ny*image.size()];
 
         for(int i = 0; i<image.size();++i){
-          float* Ic = iio_read_image_float_vec(image[indice].c_str(), &nx, &ny, &nz);
+          float* Ic = iio_read_image_float_vec(image[i].c_str(), &nx, &ny, &nz);
           if(verbose)
           printf(
             "\nParameters:\n"
@@ -454,6 +454,7 @@ int main(int argc, char *argv[])
             printf("Error : Load image %s .\n", (char*)image[i].c_str());
             return 1;
           }
+          free(Ic);
         }        
         if (I!=NULL) {
           std::vector<std::vector<harris_corner>> corners;
@@ -463,7 +464,7 @@ int main(int argc, char *argv[])
           harris_scale_parallel(
             I, corners, Nscales, gaussian, gradient, measure, k, 
             sigma_d, sigma_i, threshold, strategy, cells, Nselect, 
-            precision, nx, ny, verbose
+            precision, nx, ny, verbose, image.size()
           );
           
             if(verbose)
@@ -476,7 +477,7 @@ int main(int argc, char *argv[])
             }
           }
           delete []I;
-          free(Ic);
+          
         } 
       }
     } 
