@@ -448,7 +448,7 @@ int main(int argc, char *argv[])
               rgb2gray(Ic, I, nx, ny, nz);
             else
               for(int j=0;j<nx*ny;j++)
-                I[i*nx*ny + j]=Ic[j];
+                I[i*nx*ny+j]=Ic[j];
           }else{
             //affichage error 
             printf("Error : Load image %s .\n", (char*)image[i].c_str());
@@ -456,6 +456,7 @@ int main(int argc, char *argv[])
           }
           free(Ic);
         }        
+        printf("fin load IC\n");
         if (I!=NULL) {
           std::vector<std::vector<harris_corner>> corners;
           struct timeval start, end;
