@@ -579,10 +579,12 @@ void harris_scale_parallel(
         }
         printf("fin img\n");
         //compute Harris' corners at coarsest scale
+        vector<harris_corner> corner;
         harris_parallel(
-          I_img, corners[index_img], gauss, grad, measure, k, sigma_d, sigma_i, 
+          I_img, corner, gauss, grad, measure, k, sigma_d, sigma_i, 
           Th, strategy, cells, N, precision, nx, ny, verbose
         );
+        corners.push_back(corner);
         printf("fin harris parallel\n");
       } 
     }  
