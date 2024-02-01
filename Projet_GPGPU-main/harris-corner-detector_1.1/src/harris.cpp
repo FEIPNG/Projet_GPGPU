@@ -60,7 +60,10 @@ void compute_autocorrelation_matrix(
      B[i] = Ix[i]*Iy[i];
      C[i] = Iy[i]*Iy[i];
   }
-  
+  printf("A:\n");
+    for (int j = 0; j < 100; j++){
+		printf("%f",A[j]);
+	}
   if(gauss==NO_GAUSSIAN)
     gauss=FAST_GAUSSIAN;
 
