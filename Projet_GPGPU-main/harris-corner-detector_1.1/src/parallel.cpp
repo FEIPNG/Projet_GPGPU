@@ -357,15 +357,16 @@ void draw_points(
   * 
 **/
 void rgb2gray(
-  float *rgb,  //input color image
-  float *gray, //output grayscale image
-  int   nx,    //number of columns
-  int   ny,    //number of rows
-  int   nz     //number of channels
+  float *rgb,      //input color image
+  float *gray,     //output grayscale image
+  int   nx,        //number of columns
+  int   ny,        //number of rows
+  int   nz,        //number of channels
+  int   indice_img // indice of image
 )
 {
   for(int i=0;i<nx*ny;i++)
-    gray[i]=(0.2989*rgb[i*nz]+0.5870*rgb[i*nz+1]+0.1140*rgb[i*nz+2]);
+    gray[indice_img*nx*ny + i]=(0.2989*rgb[i*nz]+0.5870*rgb[i*nz+1]+0.1140*rgb[i*nz+2]);
 }
 
 
@@ -445,7 +446,7 @@ int main(int argc, char *argv[])
             //convert image to grayscale
             // concatenate Ic dans I
             if(nz>1)
-              rgb2gray(Ic, I, nx, ny, nz);
+              rgb2gray(Ic, I, nx, ny, nz, i);
             else
               for(int j=0;j<nx*ny;j++)
                 I[i*nx*ny+j]=Ic[j];
@@ -468,6 +469,7 @@ int main(int argc, char *argv[])
             precision, nx, ny, verbose, image.size()
           );
           
+          printf("fin harris parallel\n");
             if(verbose)
           {
             gettimeofday(&end, NULL);
