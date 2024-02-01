@@ -507,15 +507,15 @@ void harris_parallel(
   gradient(I, Ix, Iy, nx, ny, grad);
 
   message(" 3.Computing the autocorrelation with cuda: \t", start, end, verbose);
-  compute_autocorrelation_matrix_cuda(Ix, Iy, A, B, C, nx, ny);
-  if(gauss==NO_GAUSSIAN)
-    gauss=FAST_GAUSSIAN;
+  // compute_autocorrelation_matrix_cuda(Ix, Iy, A, B, C, nx, ny);
+  // if(gauss==NO_GAUSSIAN)
+  //   gauss=FAST_GAUSSIAN;
 
-  gaussian(A, A, nx, ny, sigma_i, gauss);
-  gaussian(B, B, nx, ny, sigma_i, gauss);
-  gaussian(C, C, nx, ny, sigma_i, gauss);
+  // gaussian(A, A, nx, ny, sigma_i, gauss);
+  // gaussian(B, B, nx, ny, sigma_i, gauss);
+  // gaussian(C, C, nx, ny, sigma_i, gauss);
 
-
+  compute_autocorrelation_matrix(Ix, Iy, A, B, C, sigma_i, nx, ny, gauss);
   message(" 4.Computing corner strength function: \t", start, end, verbose);
   compute_corner_response(A, B, C, R, measure, nx, ny, k);
 
