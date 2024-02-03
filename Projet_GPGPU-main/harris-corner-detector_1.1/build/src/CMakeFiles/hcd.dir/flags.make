@@ -7,11 +7,11 @@ C_DEFINES =
 
 C_INCLUDES = -I/user/7/hajbie/Projet_GPGPU/Projet_GPGPU-main/harris-corner-detector_1.1/include
 
-C_FLAGS = 
+C_FLAGS = -g
 
 CXX_DEFINES = 
 
 CXX_INCLUDES = -I/user/7/hajbie/Projet_GPGPU/Projet_GPGPU-main/harris-corner-detector_1.1/include
 
-CXX_FLAGS = -std=gnu++11
+CXX_FLAGS = -g -std=gnu++11
 

@@ -6,5 +6,5 @@ CXX_DEFINES =
 
 CXX_INCLUDES = -I/user/7/hajbie/Projet_GPGPU/Projet_GPGPU-main/harris-corner-detector_1.1/include -I/usr/local/cuda/include
 
-CXX_FLAGS = -std=gnu++11
+CXX_FLAGS = -g -std=gnu++11
 

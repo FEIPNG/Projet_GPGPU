@@ -464,8 +464,8 @@ void select_corners(
   *
 **/
 void harris_parallel(
-  float *I,        //input image
-  vector<harris_corner> &corners, //output selected corners
+  float *I,        //input images
+  vector<vector<harris_corner>> &corners, //output selected corners
   int   gauss,     //type of Gaussian 
   int   grad,      //type of gradient
   int   measure,   //measure for the discriminant function
@@ -479,7 +479,8 @@ void harris_parallel(
   int   precision, //type of subpixel precision approximation
   int   nx,        //number of columns of the image
   int   ny,        //number of rows of the image
-  int   verbose    //activate verbose mode
+  int   verbose,   //activate verbose mode
+  int nbr_imgs  // Number of images
 )
 {
   //check the dimensions of the image
@@ -487,64 +488,107 @@ void harris_parallel(
   
   struct timeval start, end;
   int size=nx*ny;
-  float *Ix=new float[size];
-  float *Iy=new float[size];
-  float *A =new float[size];
-  float *B =new float[size];
-  float *C =new float[size];
-  float *R =new float[size];
-  
+  std::vector<float *> Ix;
+  std::vector<float *> Iy;
+  std::vector<float *> A;
+  std::vector<float *> B;
+  std::vector<float *> C;
+  std::vector<float *> R;
+
+  for (int index_img = 0; index_img < nbr_imgs; index_img++) {
+    Ix.push_back(new float[nx*ny]);
+    Iy.push_back(new float[nx*ny]);
+    A.push_back(new float[nx*ny]);
+    B.push_back(new float[nx*ny]);
+    C.push_back(new float[nx*ny]);
+    R.push_back(new float[nx*ny]);
+  }
+  // Create a std::vector to store all images
+  std::vector<float *> allImages;
+
+  // Iterate through each image
+  for (int index_img = 0; index_img < nbr_imgs; index_img++) {
+      // Create a temporary vector to store the content of the current image
+      float * currentImage = new float[nx*ny];
+
+      // Copy the content of the current image to the temporary vector
+      for (int j = 0; j < nx * ny; j++) {
+          currentImage[j] = I[index_img * nx * ny + j];
+      }
+
+      // Add the temporary vector to the vector containing all images
+      allImages.push_back(currentImage);
+  }
+
+
   if(verbose) 
   {
     printf("\nHarris corner detection:\n");
     printf("[nx=%d, ny=%d, sigma_i=%f]\n", nx, ny, sigma_i);
   }
-  for (int j = 0; j < 100; j++){
-		printf("%f",I[j]);
-	}
+  
   message(" 1.Smoothing the image: \t \t", start, verbose);
-  gaussian(I, I, nx, ny, sigma_d, gauss);
+  for (int index_img = 0; index_img < nbr_imgs; index_img++){
+    gaussian(allImages[index_img], allImages[index_img], nx, ny, sigma_d, gauss);
+  }
   
   message(" 2.Computing the gradient: \t \t", start, end, verbose);
-  gradient(I, Ix, Iy, nx, ny, grad);
-
+  for (int index_img = 0; index_img < nbr_imgs; index_img++){
+    gradient(allImages[index_img], Ix[index_img], Iy[index_img], nx, ny, grad);
+  }
 
   message(" 3.Computing the autocorrelation with cuda: \t", start, end, verbose);
-  compute_autocorrelation_matrix_cuda(Ix, Iy, A, B, C, nx, ny);
-  if(gauss==NO_GAUSSIAN)
-    gauss=FAST_GAUSSIAN;
+  for (int index_img = 0; index_img < nbr_imgs; index_img++){
+    compute_autocorrelation_matrix_cuda(Ix[index_img], Iy[index_img], A[index_img], B[index_img], C[index_img], nx, ny);
+    if(gauss==NO_GAUSSIAN)
+      gauss=FAST_GAUSSIAN;
 
-  gaussian(A, A, nx, ny, sigma_i, gauss);
-  gaussian(B, B, nx, ny, sigma_i, gauss);
-  gaussian(C, C, nx, ny, sigma_i, gauss);
+    gaussian(A[index_img], A[index_img], nx, ny, sigma_i, gauss);
+    gaussian(B[index_img], B[index_img], nx, ny, sigma_i, gauss);
+    gaussian(C[index_img], C[index_img], nx, ny, sigma_i, gauss);
+  }
 
   message(" 4.Computing corner strength function: \t", start, end, verbose);
-  compute_corner_response(A, B, C, R, measure, nx, ny, k);
+  for (int index_img = 0; index_img < nbr_imgs; index_img++){
+    compute_corner_response(A[index_img], B[index_img], C[index_img], R[index_img], measure, nx, ny, k);
+  }
 
   message(" 5.Non-maximum suppression:  \t\t", start, end, verbose);
-  non_maximum_suppression(R, corners, Th, 2*sigma_i+0.5, nx, ny);
+  for (int index_img = 0; index_img < nbr_imgs; index_img++){
+    vector<harris_corner> corner;
+    non_maximum_suppression(R[index_img], corner, Th, 2*sigma_i+0.5, nx, ny);
+    corners.push_back(corner);
+  }
 
   message(" 6.Selecting output corners:  \t\t", start, end, verbose);
-  select_output_corners(corners, strategy, cells, N, nx, ny);
+  for (int index_img = 0; index_img < nbr_imgs; index_img++){
+    select_output_corners(corners[index_img], strategy, cells, N, nx, ny);
+  }
 
   if(precision==QUADRATIC_APPROXIMATION || precision==QUARTIC_INTERPOLATION)
   {
     message(" 7.Calculating subpixel accuracy: \t", start, end, verbose);
-    compute_subpixel_precision(R, corners, nx, precision);
+    for (int index_img = 0; index_img < nbr_imgs; index_img++){
+      compute_subpixel_precision(R[index_img], corners[index_img], nx, precision);
+    }
   }
   
   if(verbose)
   {
     message(start, end);
-    printf(" * Number of corners detected: %ld\n", corners.size());
+    for (int index_img = 0; index_img < nbr_imgs; index_img++){
+      printf(" * Number of corners detected: %ld\n", corners[index_img].size());
+    }
   }
   
-  delete []Ix;
-  delete []Iy;
-  delete []A;
-  delete []B;
-  delete []C;
-  delete []R;
+  for (int index_img = 0; index_img < nbr_imgs; index_img++) {
+    delete [] Ix[index_img];
+    delete [] Iy[index_img];
+    delete [] A[index_img];
+    delete [] B[index_img];
+    delete [] C[index_img];
+    delete [] R[index_img];
+  }
 }
 
 
@@ -574,30 +618,23 @@ void harris_scale_parallel(
   int   nbr_imgs   // number of images
 )
 {
-  printf("start harris\n");
+  printf("start harris scale\n");
 
     if(Nscales<=1 || nx<=64 || ny<=64)
     {
-      for (int index_img = 0; index_img < nbr_imgs; index_img++){
-        float* I_img = new float[nx*ny];
-        for(int j = 0; j < nx*ny; j++){
-          I_img[j] = I[index_img*nx*ny+j];
-        }
-        printf("fin img\n");
-        //compute Harris' corners at coarsest scale
-        vector<harris_corner> corner;
-        harris_parallel(
-          I_img, corner, gauss, grad, measure, k, sigma_d, sigma_i, 
-          Th, strategy, cells, N, precision, nx, ny, verbose
-        );
-        corners.push_back(corner);
-        printf("fin harris parallel\n");
-        free(I_img);
-      } 
+
+      printf("start harris parallel");  
+      harris_parallel(
+        I, corners, gauss, grad, measure, k, sigma_d, sigma_i, 
+        Th, strategy, cells, N, precision, nx, ny, verbose, nbr_imgs
+      );
+      printf("fin harris parallel\n");
+      
     }  
     else
     {
       //zoom out the image by a factor of 2
+      printf("zoomout");
       float *Iz = new float[nx*ny*nbr_imgs/4];  
       float* I_img = new float[nx*ny];
       float *Iz_img = new float[nx*ny/4];
@@ -626,25 +663,20 @@ void harris_scale_parallel(
       printf("fin scale dedans\n");
       delete []Iz;
 
-      for (int index_img = 0; index_img < nbr_imgs; index_img++){
-        for(int j = 0; j < nx*ny; j++){
-          I_img[j] = I[index_img*nx*ny+j];
-        }
-        //compute Harris' corners at the current scale
-        vector<harris_corner> corner;
-        harris_parallel(
-          I_img, corner, gauss, grad, measure, k, sigma_d, sigma_i, 
-          Th, strategy, cells, N, precision, nx, ny, verbose
-        );
-        corners.push_back(corner);
+        
+      //compute Harris' corners at the current scale
+      harris_parallel(
+        I, corners, gauss, grad, measure, k, sigma_d, sigma_i, 
+        Th, strategy, cells, N, precision, nx, ny, verbose, nbr_imgs
+      );
         printf("fin harris parallel\n");
         //select stable corners
+      for (int index_img = 0; index_img < nbr_imgs; index_img++){
         select_corners(corners[index_img], corners_z[index_img], sigma_i);
-        
-        printf("fin select cornors\n");
         if(verbose)
           printf(" * Number of corners after scale check: %ld\n", corners[index_img].size());
-      }
+        }
+      printf("fin select cornors\n");
     }
 }
 

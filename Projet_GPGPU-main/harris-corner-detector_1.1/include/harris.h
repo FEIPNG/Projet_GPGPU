@@ -96,8 +96,8 @@ void compute_subpixel_precision(
   *
 **/
 void harris(
-  float *I,        //input image
-  std::vector<harris_corner> &corners, //output selected corners
+  float *I,        //input images
+  std::vector<std::vector<harris_corner>> &corners, //output selected corners
   int   gauss,     //type of Gaussian 
   int   grad,      //type of gradient
   int   measure,   //measure for the discriminant function
@@ -111,7 +111,8 @@ void harris(
   int   precision, //type of subpixel precision approximation
   int   nx,        //number of columns of the image
   int   ny,        //number of rows of the image
-  int   verbose    //activate verbose mode
+  int   verbose,    //activate verbose mode
+  int nbr_imgs  // Number of images
 );
 
 
@@ -121,8 +122,8 @@ void harris(
   *
 **/
 void harris_scale(
-  float *I,        //input image
-  std::vector<harris_corner> &corners, //output selected corners
+  float *I,        //input images
+  std::vector<std::vector<harris_corner>> &corners, //output selected corners
   int   Nscales,   //number of scales for checking the stability of corners
   int   gauss,     //type of Gaussian 
   int   grad,      //type of gradient
@@ -137,7 +138,8 @@ void harris_scale(
   int   precision, //type of subpixel precision approximation
   int   nx,        //number of columns of the image
   int   ny,        //number of rows of the image
-  int   verbose    //activate verbose mode
+  int   verbose,   //activate verbose mode
+  int   nbr_imgs   // number of images
 );
 
 #endif
