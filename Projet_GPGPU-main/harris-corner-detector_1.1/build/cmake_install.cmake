@@ -1,4 +1,4 @@
-# Install script for directory: /user/3/mengfe/3a/gpu/Projet_GPGPU-main/harris-corner-detector_1.1
+# Install script for directory: /user/7/hajbie/Projet_GPGPU/Projet_GPGPU-main/harris-corner-detector_1.1
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -44,7 +44,7 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
-  include("/user/3/mengfe/3a/gpu/Projet_GPGPU-main/harris-corner-detector_1.1/build/src/cmake_install.cmake")
+  include("/user/7/hajbie/Projet_GPGPU/Projet_GPGPU-main/harris-corner-detector_1.1/build/src/cmake_install.cmake")
 
 endif()
 
@@ -56,5 +56,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/user/3/mengfe/3a/gpu/Projet_GPGPU-main/harris-corner-detector_1.1/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/user/7/hajbie/Projet_GPGPU/Projet_GPGPU-main/harris-corner-detector_1.1/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

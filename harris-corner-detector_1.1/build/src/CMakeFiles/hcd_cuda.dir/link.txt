@@ -1,0 +1,2 @@
+/usr/bin/ar qc libhcd_cuda.a CMakeFiles/hcd_cuda.dir/gradient_gpu.cu.o
+/usr/bin/ranlib libhcd_cuda.a

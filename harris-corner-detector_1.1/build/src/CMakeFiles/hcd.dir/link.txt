@@ -1,0 +1,2 @@
+/usr/bin/ar qc libhcd.a CMakeFiles/hcd.dir/gaussian.cpp.o CMakeFiles/hcd.dir/gradient.cpp.o CMakeFiles/hcd.dir/harris.cpp.o CMakeFiles/hcd.dir/interpolation.cpp.o CMakeFiles/hcd.dir/zoom.cpp.o CMakeFiles/hcd.dir/iio.c.o
+/usr/bin/ranlib libhcd.a

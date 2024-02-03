@@ -1,4 +1,4 @@
-# Install script for directory: /user/3/mengfe/3a/gpu/Projet_GPGPU-main/harris-corner-detector_1.1/src
+# Install script for directory: /user/7/hajbie/Projet_GPGPU/Projet_GPGPU-main/harris-corner-detector_1.1/src
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
