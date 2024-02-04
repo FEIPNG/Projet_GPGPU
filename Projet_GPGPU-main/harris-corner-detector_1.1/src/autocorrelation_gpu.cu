@@ -1,16 +1,16 @@
 #include "autocorrelation_gpu.cuh"
 #include <stdio.h>
 
-texture<float, 1, cudaReadModeElementType> texIx;
-texture<float, 1, cudaReadModeElementType> texIy;
+texture<float, 1, cudaReadModeElementType> texInput_x;
+texture<float, 1, cudaReadModeElementType> texInput_y;
 
 __global__ void compute_autocorrelation_matrix_kernel_texture(float *A, float *B, float *C) {
     int x = blockIdx.x * blockDim.x + threadIdx.x;
     int y = blockIdx.y * blockDim.y + threadIdx.y;
     int p = x + y * blockDim.x * gridDim.x;
 
-    float Ix_value = tex1Dfetch(texIx, p);  // Read from texture memory
-    float Iy_value = tex1Dfetch(texIy, p);
+    float Ix_value = tex1Dfetch(texInput_x, p);  // Read from texture memory
+    float Iy_value = tex1Dfetch(texInput_y, p);
 
     A[p] = Ix_value * Ix_value;
     B[p] = Ix_value * Iy_value;
